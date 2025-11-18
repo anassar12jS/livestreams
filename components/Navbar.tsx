@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FilterType, SportCategory } from '../types';
+import { FilterType } from '../types';
 import { DEFAULT_SPORTS } from '../constants';
 
 interface NavbarProps {
