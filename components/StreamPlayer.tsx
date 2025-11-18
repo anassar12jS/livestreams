@@ -8,6 +8,26 @@ interface StreamPlayerProps {
   onClose: () => void;
 }
 
+// Skeleton Loader Component
+const VideoSkeleton = () => (
+  <div className="w-full h-full bg-zinc-900/50 animate-pulse flex flex-col relative overflow-hidden">
+    {/* Play button placeholder */}
+    <div className="absolute inset-0 flex items-center justify-center z-20">
+      <div className="w-20 h-20 bg-zinc-800/80 rounded-full flex items-center justify-center border border-zinc-700">
+         <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-zinc-600 border-b-[12px] border-b-transparent ml-1.5"></div>
+      </div>
+    </div>
+    {/* Bottom bar placeholder */}
+    <div className="mt-auto h-16 bg-gradient-to-t from-zinc-900 to-transparent w-full flex items-end pb-4 px-6 gap-4 z-20">
+       <div className="h-1.5 w-full bg-zinc-800/50 rounded-full overflow-hidden">
+          <div className="h-full w-1/3 bg-zinc-700/50"></div>
+       </div>
+    </div>
+    {/* Scanline effect */}
+    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent -translate-y-full animate-[shimmer_1.5s_infinite] z-10"></div>
+  </div>
+);
+
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ match, onClose }) => {
   const [availableStreams, setAvailableStreams] = useState<Stream[]>([]);
   const [currentStream, setCurrentStream] = useState<Stream | null>(null);
@@ -15,7 +35,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ match, onClose }) =>
   const [error, setError] = useState('');
   const [activeSourceId, setActiveSourceId] = useState<string>('');
 
-  // Load streams from the first source initially
+  // Load streams from the first source initially & Background fetch others
   useEffect(() => {
     const loadInitialStreams = async () => {
       if (!match.sources || match.sources.length === 0) {
@@ -28,7 +48,16 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ match, onClose }) =>
         // Default to first source
         const firstSource = match.sources[0];
         setActiveSourceId(firstSource.source);
+        
+        // Start fetching the main source
         await loadStreamsForSource(firstSource.source, firstSource.id);
+
+        // Background fetch all other sources to populate cache (Parallel Warming)
+        if (match.sources.length > 1) {
+          match.sources.slice(1).forEach(src => {
+             fetchStreams(src.source, src.id).catch(() => {});
+          });
+        }
       } catch (err) {
         setError('Failed to load streams.');
         setLoading(false);
@@ -45,19 +74,21 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ match, onClose }) =>
   }, [match]);
 
   const loadStreamsForSource = async (sourceName: string, sourceId: string) => {
+    // Only set loading true if we don't have data cached (hard to check sync, so we rely on Skeleton UI)
     setLoading(true);
-    setAvailableStreams([]); 
+    setError('');
     setActiveSourceId(sourceName);
-    setCurrentStream(null); // Reset current stream while loading new source to avoid confusion
+    setAvailableStreams([]); 
+    setCurrentStream(null); 
     
     try {
       const streams = await fetchStreams(sourceName, sourceId);
       setAvailableStreams(streams);
+      
       if (streams.length > 0) {
         // Auto-select HD stream if available, otherwise first
         const bestStream = streams.find(s => s.hd) || streams[0];
         setCurrentStream(bestStream);
-        setError('');
       } else {
         setError(`No streams found for source: ${sourceName}`);
       }
@@ -91,15 +122,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ match, onClose }) =>
           </div>
           <button 
             onClick={onClose}
-            className="hidden lg:block p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <button 
-            onClick={onClose}
-            className="lg:hidden p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+            className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -110,38 +133,41 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ match, onClose }) =>
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden h-full">
           {/* Video Area - Takes maximum available space */}
           <div className="flex-1 bg-black relative group flex items-center justify-center w-full h-[50vh] lg:h-auto shrink-0 lg:shrink">
+            
+            {/* Loading Skeleton */}
             {loading && (
-              <div className="absolute inset-0 flex items-center justify-center z-10 bg-zinc-900/50">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                    <span className="text-sm text-zinc-400 animate-pulse">Connecting to satellite...</span>
-                </div>
+              <div className="absolute inset-0 z-20">
+                 <VideoSkeleton />
               </div>
             )}
             
+            {/* Error State */}
             {error && !loading && (
-               <div className="text-center p-8 max-w-md mx-auto">
-                  <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <div className="text-red-400 mb-2 font-medium">Stream Unavailable</div>
-                  <p className="text-zinc-500 text-sm">{error}</p>
-                  <button 
-                    onClick={() => loadStreamsForSource(activeSourceId, match.sources.find(s => s.source === activeSourceId)?.id || '')}
-                    className="mt-4 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm text-white transition-colors"
-                  >
-                    Retry Connection
-                  </button>
+               <div className="absolute inset-0 flex items-center justify-center z-10 bg-zinc-900">
+                 <div className="text-center p-8 max-w-md mx-auto">
+                    <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <div className="text-red-400 mb-2 font-medium">Stream Unavailable</div>
+                    <p className="text-zinc-500 text-sm mb-4">{error}</p>
+                    <button 
+                      onClick={() => loadStreamsForSource(activeSourceId, match.sources.find(s => s.source === activeSourceId)?.id || '')}
+                      className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm text-white transition-colors"
+                    >
+                      Retry Connection
+                    </button>
+                 </div>
                </div>
             )}
 
+            {/* Active Stream Player */}
             {currentStream && !loading && !error && (
               <iframe
                 src={currentStream.embedUrl}
                 title="Stream Player"
-                className="w-full h-full absolute inset-0"
+                className="w-full h-full absolute inset-0 z-0"
                 allowFullScreen
                 loading="eager"
                 referrerPolicy="no-referrer"

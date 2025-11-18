@@ -6,9 +6,10 @@ import { Badge } from './Badge';
 interface MatchCardProps {
   match: Match;
   onClick: (match: Match) => void;
+  onHover?: (match: Match) => void;
 }
 
-export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick }) => {
+export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick, onHover }) => {
   const matchDate = new Date(match.date);
   const isLive = match.sources.length > 0 && (Date.now() >= match.date - 15 * 60 * 1000); // Assume live if sources exist and time is past or near start
   
@@ -23,6 +24,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick }) => {
   return (
     <div 
       onClick={() => onClick(match)}
+      onMouseEnter={() => onHover?.(match)}
       className="group relative flex flex-col bg-app-card hover:bg-zinc-800 border border-zinc-800/50 hover:border-zinc-700 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer shadow-sm hover:shadow-xl hover:shadow-blue-900/5"
     >
       {/* Card Header / Image Background if no teams */}

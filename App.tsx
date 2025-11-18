@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { MatchCard } from './components/MatchCard';
 import { StreamPlayer } from './components/StreamPlayer';
-import { fetchMatches } from './services/apiService';
+import { fetchMatches, fetchStreams } from './services/apiService';
 import { FilterType, Match } from './types';
 
 const App: React.FC = () => {
@@ -54,6 +54,15 @@ const App: React.FC = () => {
     );
   }, [matches, searchQuery]);
 
+  // Prefetch streams when hovering over a match card to reduce perceived latency
+  const handleMatchHover = (match: Match) => {
+    if (match.sources && match.sources.length > 0) {
+      // Prefetch the first source as it's the most likely to be clicked
+      fetchStreams(match.sources[0].source, match.sources[0].id)
+        .catch(() => {}); // Ignore errors on prefetch
+    }
+  };
+
   return (
     <div className="min-h-screen bg-app-bg flex flex-col font-sans">
       <Navbar 
@@ -95,7 +104,8 @@ const App: React.FC = () => {
               <MatchCard 
                 key={match.id} 
                 match={match} 
-                onClick={setSelectedMatch} 
+                onClick={setSelectedMatch}
+                onHover={handleMatchHover}
               />
             ))}
           </div>
