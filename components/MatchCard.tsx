@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { Match } from '../types';
 import { getImageUrl } from '../services/apiService';
 import { Badge } from './Badge';
+import { TeamLogo } from './TeamLogo';
 
 interface MatchCardProps {
   match: Match;
@@ -55,12 +57,11 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick, onHover })
           <div className="flex items-center justify-between gap-4">
             {/* Home Team */}
             <div className="flex flex-col items-center flex-1 text-center gap-2">
-              <div className="relative w-12 h-12 sm:w-14 sm:h-14 bg-zinc-900 rounded-full p-2 border border-zinc-800 group-hover:border-zinc-600 transition-colors">
-                <img 
-                  src={getImageUrl(homeTeam.badge)} 
-                  alt={homeTeam.name} 
-                  className="w-full h-full object-contain"
-                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/50/50?grayscale' }}
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 bg-zinc-900/50 rounded-full p-2 border border-zinc-800 group-hover:border-zinc-600 transition-colors shadow-inner">
+                <TeamLogo 
+                  name={homeTeam.name} 
+                  badgePath={homeTeam.badge} 
+                  sport={match.category}
                 />
               </div>
               <span className="text-sm font-semibold text-zinc-200 leading-tight line-clamp-2">{homeTeam.name}</span>
@@ -74,12 +75,11 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onClick, onHover })
 
             {/* Away Team */}
             <div className="flex flex-col items-center flex-1 text-center gap-2">
-              <div className="relative w-12 h-12 sm:w-14 sm:h-14 bg-zinc-900 rounded-full p-2 border border-zinc-800 group-hover:border-zinc-600 transition-colors">
-                <img 
-                  src={getImageUrl(awayTeam.badge)} 
-                  alt={awayTeam.name} 
-                  className="w-full h-full object-contain"
-                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/50/50?grayscale' }}
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 bg-zinc-900/50 rounded-full p-2 border border-zinc-800 group-hover:border-zinc-600 transition-colors shadow-inner">
+                <TeamLogo 
+                  name={awayTeam.name} 
+                  badgePath={awayTeam.badge} 
+                  sport={match.category}
                 />
               </div>
               <span className="text-sm font-semibold text-zinc-200 leading-tight line-clamp-2">{awayTeam.name}</span>
