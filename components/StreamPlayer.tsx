@@ -10,15 +10,18 @@ interface StreamPlayerProps {
 
 // Skeleton Loader Component
 const VideoSkeleton = () => (
-  <div className="w-full h-full bg-zinc-900/50 animate-pulse flex flex-col relative overflow-hidden">
-    {/* Play button placeholder */}
-    <div className="absolute inset-0 flex items-center justify-center z-20">
-      <div className="w-20 h-20 bg-zinc-800/80 rounded-full flex items-center justify-center border border-zinc-700">
-         <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-zinc-600 border-b-[12px] border-b-transparent ml-1.5"></div>
+  <div className="w-full h-full bg-zinc-900/50 animate-pulse flex flex-col items-center justify-center relative overflow-hidden">
+    {/* Central Loading State */}
+    <div className="z-20 flex flex-col items-center gap-4">
+      <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+      <div className="text-center">
+        <p className="text-white font-medium text-lg">Connecting to live stream...</p>
+        <p className="text-zinc-400 text-sm">Establishing secure connection</p>
       </div>
     </div>
+    
     {/* Bottom bar placeholder */}
-    <div className="mt-auto h-16 bg-gradient-to-t from-zinc-900 to-transparent w-full flex items-end pb-4 px-6 gap-4 z-20">
+    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-zinc-900 to-transparent w-full flex items-end pb-4 px-6 gap-4 z-20">
        <div className="h-1.5 w-full bg-zinc-800/50 rounded-full overflow-hidden">
           <div className="h-full w-1/3 bg-zinc-700/50"></div>
        </div>
@@ -170,7 +173,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ match, onClose }) =>
                 className="w-full h-full absolute inset-0 z-0"
                 allowFullScreen
                 loading="eager"
-                referrerPolicy="no-referrer"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               />
             )}
